@@ -1,0 +1,441 @@
+# Usage.yaml - 向量数据库工具使用说明
+# 对应 register.py 中注册的所有工具
+tools:
+  # ========== 用户管理 ==========
+  create_user:
+    summary: "创建新的向量数据库用户"
+    parameters:
+      - name: username
+        required: true
+        description: "用户名（字母数字开头，1-32位，可含 - _）"
+      - name: password
+        required: true
+        description: "密码（至少6位）"
+    returns: 'JSON字符串：{"status": true/false, "message": "说明信息"}'
+    example: 'create_user(username="alice", password="pass123456")'
+
+  delete_user:
+    summary: "删除用户（需验证密码），可选择将拥有的共享集合转移给指定用户"
+    parameters:
+      - name: username
+        required: true
+        description: "要删除的用户名"
+      - name: password
+        required: true
+        description: "用户密码"
+      - name: transfer_to
+        required: false
+        default: null
+        description: "接收共享集合的目标用户名，若未提供且用户拥有共享集合，则删除失败"
+    returns: 'JSON字符串：{"status": true/false, "message": "说明信息"}'
+    example: 'delete_user(username="alice", password="pass123456", transfer_to="bob")'
+
+  change_password:
+    summary: "修改用户密码"
+    parameters:
+      - name: username
+        required: true
+        description: "用户名"
+      - name: old_password
+        required: true
+        description: "当前密码"
+      - name: new_password
+        required: true
+        description: "新密码（至少6位）"
+    returns: 'JSON字符串：{"status": true/false, "message": "说明信息"}'
+    example: 'change_password(username="alice", old_password="old123", new_password="new456")'
+
+  # ========== 私有集合操作 ==========
+  list_private_collections:
+    summary: "列出当前用户的所有私有集合"
+    parameters:
+      - name: username
+        required: true
+        description: "用户名"
+      - name: password
+        required: true
+        description: "用户密码"
+    returns: 'JSON字符串：{"collections": [{"name": "xxx", "count": 123}, ...]} 或 {"error": "..."}'
+    example: 'list_private_collections(username="alice", password="pass123456")'
+
+  add_documents_private:
+    summary: "向私有集合中添加文档，自动向量化"
+    parameters:
+      - name: username
+        required: true
+        description: "用户名"
+      - name: password
+        required: true
+        description: "用户密码"
+      - name: collection_name
+        required: true
+        description: "集合名称"
+      - name: documents
+        required: true
+        description: "文档文本列表（每篇文档不超过10000字符）"
+      - name: metadatas
+        required: false
+        default: null
+        description: "对应的元数据列表（与文档列表等长）"
+      - name: ids
+        required: false
+        default: null
+        description: "文档ID列表（不提供则自动生成UUID）"
+    returns: 'JSON字符串：{"status": "success", "added": 数量, "ids": ["id1",...]} 或错误信息'
+    example: 'add_documents_private(username="alice", password="pass123456", collection_name="my_knowledge", documents=["Python 是一种高级语言。", "AI 正在改变世界。"])'
+
+  search_private:
+    summary: "在私有集合中搜索与查询最相似的文档"
+    parameters:
+      - name: username
+        required: true
+        description: "用户名"
+      - name: password
+        required: true
+        description: "用户密码"
+      - name: collection_name
+        required: true
+        description: "集合名称"
+      - name: query_text
+        required: true
+        description: "查询文本"
+      - name: top_k
+        required: false
+        default: 10
+        description: "返回结果数量（最大100）"
+      - name: where
+        required: false
+        default: null
+        description: "元数据过滤条件（ChromaDB where 格式）"
+    returns: 'JSON字符串：{"documents": [...], "metadatas": [...], "distances": [...]} 或错误信息'
+    example: 'search_private(username="alice", password="pass123456", collection_name="my_knowledge", query_text="什么是Python", top_k=5)'
+
+  delete_private_collection:
+    summary: "删除私有集合及其所有文档"
+    parameters:
+      - name: username
+        required: true
+        description: "用户名"
+      - name: password
+        required: true
+        description: "用户密码"
+      - name: collection_name
+        required: true
+        description: "要删除的集合名称"
+    returns: 'JSON字符串：{"status": true/false, "message": "..."}'
+    example: 'delete_private_collection(username="alice", password="pass123456", collection_name="old_data")'
+
+  delete_documents_private:
+    summary: "根据ID列表删除私有集合中的文档"
+    parameters:
+      - name: username
+        required: true
+        description: "用户名"
+      - name: password
+        required: true
+        description: "用户密码"
+      - name: collection_name
+        required: true
+        description: "集合名称"
+      - name: ids
+        required: true
+        description: "要删除的文档ID列表"
+    returns: 'JSON字符串：{"status": true/false, "message": "..."}'
+    example: 'delete_documents_private(username="alice", password="pass123456", collection_name="my_knowledge", ids=["id1","id2"])'
+
+  update_documents_private:
+    summary: "更新私有集合中文档的内容和/或元数据"
+    parameters:
+      - name: username
+        required: true
+        description: "用户名"
+      - name: password
+        required: true
+        description: "用户密码"
+      - name: collection_name
+        required: true
+        description: "集合名称"
+      - name: ids
+        required: true
+        description: "要更新的文档ID列表"
+      - name: documents
+        required: false
+        default: null
+        description: "新的文档文本列表（与ids等长，若不更新文档则省略）"
+      - name: metadatas
+        required: false
+        default: null
+        description: "新的元数据列表（与ids等长，若不更新元数据则省略）"
+    returns: 'JSON字符串：{"status": true/false, "message": "..."}'
+    example: 'update_documents_private(username="alice", password="pass123456", collection_name="my_knowledge", ids=["id1"], documents=["更新后的内容"])'
+
+  get_document_private:
+    summary: "获取私有集合中的单个文档详情"
+    parameters:
+      - name: username
+        required: true
+        description: "用户名"
+      - name: password
+        required: true
+        description: "用户密码"
+      - name: collection_name
+        required: true
+        description: "集合名称"
+      - name: doc_id
+        required: true
+        description: "文档ID"
+    returns: 'JSON字符串：{"id": "...", "document": "...", "metadata": {...}} 或错误信息'
+    example: 'get_document_private(username="alice", password="pass123456", collection_name="my_knowledge", doc_id="uuid-1234")'
+
+  collection_stats_private:
+    summary: "获取私有集合的统计信息（文档数量）"
+    parameters:
+      - name: username
+        required: true
+        description: "用户名"
+      - name: password
+        required: true
+        description: "用户密码"
+      - name: collection_name
+        required: true
+        description: "集合名称"
+    returns: 'JSON字符串：{"count": 123} 或错误信息'
+    example: 'collection_stats_private(username="alice", password="pass123456", collection_name="my_knowledge")'
+
+  # ========== 共享集合管理 ==========
+  create_shared_collection:
+    summary: "创建一个新的共享集合，创建者自动成为所有者"
+    parameters:
+      - name: owner
+        required: true
+        description: "所有者用户名"
+      - name: password
+        required: true
+        description: "用户密码"
+      - name: collection_name
+        required: true
+        description: "集合名称"
+    returns: 'JSON字符串：{"status": true/false, "message": "..."}'
+    example: 'create_shared_collection(owner="alice", password="pass123456", collection_name="team_docs")'
+
+  delete_shared_collection:
+    summary: "删除共享集合（仅所有者可操作）"
+    parameters:
+      - name: owner
+        required: true
+        description: "所有者用户名"
+      - name: password
+        required: true
+        description: "用户密码"
+      - name: collection_name
+        required: true
+        description: "要删除的集合名称"
+    returns: 'JSON字符串：{"status": true/false, "message": "..."}'
+    example: 'delete_shared_collection(owner="alice", password="pass123456", collection_name="team_docs")'
+
+  add_documents_shared:
+    summary: "向共享集合添加文档（需要写权限）"
+    parameters:
+      - name: username
+        required: true
+        description: "操作用户名"
+      - name: password
+        required: true
+        description: "用户密码"
+      - name: collection_name
+        required: true
+        description: "集合名称"
+      - name: documents
+        required: true
+        description: "文档文本列表"
+      - name: metadatas
+        required: false
+        default: null
+        description: "元数据列表（与文档等长）"
+      - name: ids
+        required: false
+        default: null
+        description: "文档ID列表（不提供则自动生成）"
+    returns: 'JSON字符串：{"status": "success", "added": 数量, "ids": [...]} 或错误信息'
+    example: 'add_documents_shared(username="bob", password="bob123", collection_name="team_docs", documents=["产品需求文档 v2.0"])'
+
+  search_shared:
+    summary: "在共享集合中搜索（需要读权限）"
+    parameters:
+      - name: username
+        required: true
+        description: "操作用户名"
+      - name: password
+        required: true
+        description: "用户密码"
+      - name: collection_name
+        required: true
+        description: "集合名称"
+      - name: query_text
+        required: true
+        description: "查询文本"
+      - name: top_k
+        required: false
+        default: 10
+        description: "返回结果数量（最大100）"
+      - name: where
+        required: false
+        default: null
+        description: "元数据过滤条件"
+    returns: 'JSON字符串：{"documents": [...], "metadatas": [...], "distances": [...]} 或错误信息'
+    example: 'search_shared(username="bob", password="bob123", collection_name="team_docs", query_text="需求文档", top_k=5)'
+
+  delete_documents_shared:
+    summary: "从共享集合中删除文档（需要写权限）"
+    parameters:
+      - name: username
+        required: true
+        description: "操作用户名"
+      - name: password
+        required: true
+        description: "用户密码"
+      - name: collection_name
+        required: true
+        description: "集合名称"
+      - name: ids
+        required: true
+        description: "要删除的文档ID列表"
+    returns: 'JSON字符串：{"status": true/false, "message": "..."}'
+    example: 'delete_documents_shared(username="bob", password="bob123", collection_name="team_docs", ids=["id1"])'
+
+  update_documents_shared:
+    summary: "更新共享集合中的文档（需要写权限）"
+    parameters:
+      - name: username
+        required: true
+        description: "操作用户名"
+      - name: password
+        required: true
+        description: "用户密码"
+      - name: collection_name
+        required: true
+        description: "集合名称"
+      - name: ids
+        required: true
+        description: "文档ID列表"
+      - name: documents
+        required: false
+        default: null
+        description: "新的文档文本列表"
+      - name: metadatas
+        required: false
+        default: null
+        description: "新的元数据列表"
+    returns: 'JSON字符串：{"status": true/false, "message": "..."}'
+    example: 'update_documents_shared(username="bob", password="bob123", collection_name="team_docs", ids=["id1"], documents=["更新后的内容"])'
+
+  get_document_shared:
+    summary: "获取共享集合中的单个文档详情"
+    parameters:
+      - name: username
+        required: true
+        description: "操作用户名"
+      - name: password
+        required: true
+        description: "用户密码"
+      - name: collection_name
+        required: true
+        description: "集合名称"
+      - name: doc_id
+        required: true
+        description: "文档ID"
+    returns: 'JSON字符串：{"id": "...", "document": "...", "metadata": {...}} 或错误信息'
+    example: 'get_document_shared(username="bob", password="bob123", collection_name="team_docs", doc_id="uuid-1234")'
+
+  collection_stats_shared:
+    summary: "获取共享集合的统计信息"
+    parameters:
+      - name: username
+        required: true
+        description: "操作用户名"
+      - name: password
+        required: true
+        description: "用户密码"
+      - name: collection_name
+        required: true
+        description: "集合名称"
+    returns: 'JSON字符串：{"count": 123} 或错误信息'
+    example: 'collection_stats_shared(username="bob", password="bob123", collection_name="team_docs")'
+
+  # ========== 共享集合权限管理 ==========
+  grant_shared_access:
+    summary: "授予用户对共享集合的读/写权限（需要所有者身份）"
+    parameters:
+      - name: owner
+        required: true
+        description: "所有者用户名"
+      - name: password
+        required: true
+        description: "用户密码"
+      - name: collection_name
+        required: true
+        description: "集合名称"
+      - name: target_user
+        required: true
+        description: "被授权的目标用户名"
+      - name: writer
+        required: false
+        default: true
+        description: "是否授予写入权限（true=写，false=只读）"
+    returns: 'JSON字符串：{"status": true/false, "message": "..."}'
+    example: 'grant_shared_access(owner="alice", password="pass123456", collection_name="team_docs", target_user="bob", writer=true)'
+
+  revoke_shared_access:
+    summary: "撤销用户对共享集合的所有权限"
+    parameters:
+      - name: owner
+        required: true
+        description: "所有者用户名"
+      - name: password
+        required: true
+        description: "用户密码"
+      - name: collection_name
+        required: true
+        description: "集合名称"
+      - name: target_user
+        required: true
+        description: "被撤销权限的用户名"
+    returns: 'JSON字符串：{"status": true/false, "message": "..."}'
+    example: 'revoke_shared_access(owner="alice", password="pass123456", collection_name="team_docs", target_user="bob")'
+
+  transfer_shared_collection:
+    summary: "将共享集合的所有权转让给另一用户"
+    parameters:
+      - name: owner
+        required: true
+        description: "当前所有者用户名"
+      - name: password
+        required: true
+        description: "用户密码"
+      - name: collection_name
+        required: true
+        description: "集合名称"
+      - name: new_owner
+        required: true
+        description: "新所有者用户名"
+    returns: 'JSON字符串：{"status": true/false, "message": "..."}'
+    example: 'transfer_shared_collection(owner="alice", password="pass123456", collection_name="team_docs", new_owner="charlie")'
+
+  list_shared_collections:
+    summary: "列出当前用户有权访问的所有共享集合"
+    parameters:
+      - name: username
+        required: true
+        description: "用户名"
+      - name: password
+        required: true
+        description: "用户密码"
+    returns: 'JSON字符串：{"collections": [{"name": "xxx", "owner": "yyy", "access": "read/write"}, ...]} 或错误信息'
+    example: 'list_shared_collections(username="bob", password="bob123")'
+
+  # ========== 系统健康检查 ==========
+  vector_health_check:
+    summary: "获取向量存储系统的健康状态（模型加载、连接状态等）"
+    parameters: []
+    returns: 'JSON字符串：{"status": "healthy", "model_loaded": true, "embedding_dim": 768, ...} 或错误信息'
+    example: 'vector_health_check()'

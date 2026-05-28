@@ -1,0 +1,59 @@
+tools:
+  calc:
+    summary: 数学计算工具，支持表达式计算、方程求解、不等式、极限、导数、积分、泰勒展开。
+    parameters:
+      - name: operation
+        required: true
+        description: |
+          操作类型，可选值：
+          - "expression" : 计算表达式的值
+          - "equation" : 解方程
+          - "inequality" : 解不等式（暂未实现，预留）
+          - "limit" : 求极限
+          - "derivative" : 求导数
+          - "integral" : 求积分（定积分/不定积分）
+          - "taylor" : 泰勒展开
+      - name: expression
+        required: false
+        default: ""
+        description: 数学表达式，如 "sqrt(16) + sin(pi/2)"
+      - name: equation
+        required: false
+        default: ""
+        description: 方程表达式，如 "x**2 - 4 = 0"
+      - name: variable
+        required: false
+        default: "x"
+        description: 变量名
+      - name: point
+        required: false
+        default: "0"
+        description: 极限点或泰勒展开点
+      - name: order
+        required: false
+        default: 1
+        description: 导数阶数或泰勒展开阶数
+      - name: lower_limit
+        required: false
+        default: ""
+        description: 定积分下限
+      - name: upper_limit
+        required: false
+        default: ""
+        description: 定积分上限
+    returns: |
+      JSON 字符串：
+      - 成功时：{"status": "success", "result": 计算结果（数字、表达式或列表）}
+      - 失败时：{"status": "error", "error": "错误描述"}
+    example: |
+      # 计算表达式
+      calc(operation="expression", expression="2+3*4")
+      # 返回 {"status": "success", "result": 14}
+
+      # 解方程
+      calc(operation="equation", equation="x**2 - 4 = 0", variable="x")
+      # 返回 {"status": "success", "result": [-2, 2]}
+
+      # 求导数
+      calc(operation="derivative", expression="x**3", variable="x", order=2)
+      # 返回 {"status": "success", "result": "6*x"}

@@ -1,0 +1,15 @@
+# requirements.txt
+# Python >= 3.10
+
+# torch
+pexpect
+aiofiles==25.1.0
+fastmcp==3.3.1
+requests==2.33.1
+rich==15.0.0
+loguru==0.7.3
+beautifulsoup4==4.14.3
+crawlee[playwright]==1.7.1
+pyyaml==6.0.3
+chromadb==1.5.9
+sentence-transformers==5.4.1

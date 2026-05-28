@@ -1,0 +1,167 @@
+tools:
+  terminal_start:
+    summary: 启动一个新的终端会话
+    parameters:
+      - name: command
+        required: false
+        default: "/bin/bash"
+        description: 要执行的命令，默认为 /bin/bash
+      - name: env
+        required: false
+        description: 环境变量字典（可选）
+      - name: log_file
+        required: false
+        description: 日志文件路径（可选），将所有输出写入该文件
+    returns: 'JSON 字符串，包含会话ID（session）、初始输出（output）和 eof 标志'
+    example: |
+      terminal_start(command="/bin/bash")
+      # 返回 {"ok": true, "session": "a1b2c3d4", "output": "bash-5.2$ ", "eof": false}
+
+  terminal_send:
+    summary: 向会话发送一行文本（自动追加回车）
+    parameters:
+      - name: sid
+        required: true
+        description: 会话ID
+      - name: text
+        required: true
+        description: 要发送的文本，不能包含换行符，允许只含空白（会发送空行）
+    returns: 'JSON 字符串，{"ok": true} 或错误信息'
+    example: |
+      terminal_send(sid="a1b2c3d4", text="ls -la")
+
+  terminal_send_multiline:
+    summary: 发送多行文本，每行自动追加回车
+    parameters:
+      - name: sid
+        required: true
+        description: 会话ID
+      - name: text
+        required: true
+        description: 多行文本（如脚本片段）
+    returns: 'JSON 字符串，成功返回 {"ok": true}，失败返回错误信息及已发送行数'
+    example: |
+      terminal_send_multiline(sid="a1b2c3d4", text="echo line1\necho line2")
+
+  terminal_send_key:
+    summary: 发送特殊按键（如 Ctrl+C、上下箭头等）
+    parameters:
+      - name: sid
+        required: true
+        description: 会话ID
+      - name: key
+        required: true
+        description: |
+          按键名称，支持：
+          ctrl_c, ctrl_d, ctrl_z, ctrl_a, ctrl_e, ctrl_l, ctrl_u, ctrl_k, ctrl_w,
+          up, down, left, right, home, end, pageup, pagedown, insert, delete,
+          f1~f12, escape, tab, enter, backspace
+    returns: 'JSON 字符串，成功 {"ok": true}'
+    example: |
+      terminal_send_key(sid="a1b2c3d4", key="ctrl_c")
+
+  terminal_send_raw:
+    summary: 发送原始字节（十六进制字符串）
+    parameters:
+      - name: sid
+        required: true
+        description: 会话ID
+      - name: hex_bytes
+        required: true
+        description: 十六进制字符串，例如 "1b5b41" 表示 ESC [ A
+    returns: 'JSON 字符串，成功 {"ok": true}'
+    example: |
+      terminal_send_raw(sid="a1b2c3d4", hex_bytes="0d")  # 发送回车
+
+  terminal_read:
+    summary: 读取当前所有可用输出（非阻塞，一次性返回）
+    parameters:
+      - name: sid
+        required: true
+        description: 会话ID
+    returns: 'JSON 字符串，包含 output（已截断过长输出）和 eof（进程是否已结束）'
+    example: |
+      terminal_read(sid="a1b2c3d4")
+      # {"ok": true, "output": "bash-5.2$ ", "eof": false}
+
+  terminal_expect:
+    summary: 等待输出中出现指定正则模式（可多个），返回匹配到的内容及之前的输出
+    parameters:
+      - name: sid
+        required: true
+        description: 会话ID
+      - name: patterns
+        required: true
+        description: 字符串或字符串列表，每个为正则表达式
+      - name: timeout
+        required: false
+        default: 10
+        description: 超时秒数
+    returns: 'JSON 字符串，包含 matched（是否匹配）、matched_index（序号）、output（匹配内容及之前部分）、eof'
+    example: |
+      terminal_expect(sid="a1b2c3d4", patterns=["password:", "Login:"], timeout=5)
+
+  terminal_exec:
+    summary: 发送命令并自动应答交互式提示（如密码、确认等），内置分页器处理（--More-- 等）
+    parameters:
+      - name: sid
+        required: true
+        description: 会话ID
+      - name: command
+        required: true
+        description: 要执行的命令
+      - name: expect_map
+        required: false
+        description: 'JSON 字符串或字典，如 ''{"[Y/n]": "y", "password:": "mypass"}'''
+      - name: enable_defaults
+        required: false
+        default: true
+        description: 是否启用内置分页器模式（--More-- 等）
+      - name: timeout
+        required: false
+        default: 30
+        description: 总超时秒数
+    returns: 'JSON 字符串，包含所有累积输出和 eof'
+    example: |
+      terminal_exec(
+          sid="a1b2c3d4",
+          command="sudo apt update",
+          expect_map='{"password:": "my_sudo_pass"}'
+      )
+
+  terminal_exitstatus:
+    summary: 获取子进程退出状态（仅当进程已结束时有效）
+    parameters:
+      - name: sid
+        required: true
+        description: 会话ID
+    returns: 'JSON 字符串，包含 exited（是否已退出）、exitstatus（退出码）、signalstatus（终止信号）'
+    example: |
+      terminal_exitstatus(sid="a1b2c3d4")
+      # {"ok": true, "exited": true, "exitstatus": 0, "signalstatus": null}
+
+  terminal_set_winsize:
+    summary: 设置终端窗口大小（行数和列数）
+    parameters:
+      - name: sid
+        required: true
+        description: 会话ID
+      - name: rows
+        required: true
+        description: 行数（正整数）
+      - name: cols
+        required: true
+        description: 列数（正整数）
+    returns: 'JSON 字符串，成功 {"ok": true}'
+    example: |
+      terminal_set_winsize(sid="a1b2c3d4", rows=40, cols=120)
+
+  terminal_close:
+    summary: 主动关闭会话，释放资源
+    parameters:
+      - name: sid
+        required: true
+        description: 会话ID
+    returns: 'JSON 字符串，成功 {"ok": true}'
+    example: |
+      terminal_close(sid="a1b2c3d4")

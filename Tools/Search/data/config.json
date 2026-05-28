@@ -1,0 +1,15 @@
+{
+    "search_engines": {
+        "bing": {
+            "url_template": "https://www.bing.com/search?q={query}&first={offset}",
+            "parser": "bing",
+            "enabled": true
+        },
+        "duckduckgo": {
+            "url_template": "https://html.duckduckgo.com/html/?q={query}&s={offset}",
+            "parser": "duckduckgo",
+            "enabled": true
+        }
+    },
+    "default_engine": "bing"
+}

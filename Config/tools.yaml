@@ -1,0 +1,26 @@
+# Config/tools.yaml
+tools:
+  - name: 数学计算器
+    module: Tools.Calc.register
+    enabled: true
+    description: 表达式求值、解方程、微积分、极限、泰勒展开等
+
+  - name: 网络搜索
+    module: Tools.Search.register
+    enabled: true
+    description: 网络搜索
+
+  - name: 向量数据库
+    module: Tools.VectorStore.register
+    enabled: true
+    description: 存储数据与RAG检索
+
+  - name: 终端交互系统
+    module: Tools.Terminal.register
+    enabled: true
+    description: 提供一个完整的终端交互系统
+
+  - name: 系统工具
+    module: Tools.System.register
+    enabled: false
+    description: 命令执行、网页爬虫
